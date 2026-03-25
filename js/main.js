@@ -101,6 +101,47 @@ function destroyPingPong(gl, pp) {
     gl.deleteFramebuffer(pp.write.fbo);
 }
 
+function createObstacleTexture(gl) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+}
+
+function buildObstacleMask(w, h) {
+    const data = new Uint8Array(w * h * 4);
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const nx = x / w;
+            const ny = y / h;
+            let solid = false;
+
+            solid = solid || (nx < 0.05 && ny < 0.8 && ny > 0.7);
+            solid = solid || (nx < 0.2 && nx > 0.1 && ny < 0.7 && ny > 0.6);
+            solid = solid || (nx < 0.50 && nx > 0.3 && ny < 0.5 && ny > 0.48);
+            solid = solid || (nx < 0.4 && nx > 0.38 && ny < 0.58 && ny > 0.28);
+
+            const floorY = (0.2 - nx * (0.1 + 0.1 * Math.sin((1.0 - nx) * (1.0 - nx) * 150.0)));
+            solid = solid || (ny < floorY);
+
+            solid = solid || (x < 1 || y < 1 || (h - y) < 1 || (w - x) < 1);
+
+            const i = 4 * (y * w + x);
+            const v = solid ? 255 : 0;
+            data[i + 0] = v;
+            data[i + 1] = v;
+            data[i + 2] = v;
+            data[i + 3] = 255;
+        }
+    }
+
+    return data;
+}
+
 // --- Main ---
 
 async function main() {
@@ -143,6 +184,8 @@ async function main() {
             u_mouse: gl.getUniformLocation(prog, "u_mouse"),
             u_frame: gl.getUniformLocation(prog, "u_frame"),
             u_buffer: gl.getUniformLocation(prog, "u_buffer"),
+            u_obstacles: gl.getUniformLocation(prog, "u_obstacles"),
+            //u_debug_obstacles: gl.getUniformLocation(prog, "u_debug_obstacles"),
         };
     }
     const uA = getUniforms(progA);
@@ -152,6 +195,13 @@ async function main() {
     const uImg = getUniforms(progImg);
 
     const quad = createFullscreenQuad(gl);
+    let debugObstacles = true;
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "d" || e.key === "D") {
+            debugObstacles = !debugObstacles;
+            console.log("Obstacle debug mode:", debugObstacles ? "ON" : "OFF");
+        }
+    });
 
     // Mouse state (ShaderToy convention: z > 0 when pressed)
     const mouse = { x: 0, y: 0, down: false };
@@ -188,6 +238,7 @@ async function main() {
     // FBO management
     let w = 0, h = 0;
     let ppA, ppB, ppC, ppD;
+    const obstacleTex = createObstacleTexture(gl);
 
     function ensureFBOs() {
         const dpr = window.devicePixelRatio || 1;
@@ -210,6 +261,10 @@ async function main() {
             ppC = createPingPong(gl, w, h);
             ppD = createPingPong(gl, w, h);
 
+            const obstacleMask = buildObstacleMask(w, h);
+            gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, obstacleMask);
+
             frameCount = 0; // reset sim on resize
         }
     }
@@ -223,10 +278,16 @@ async function main() {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, inputTex);
         if (uniforms.u_buffer !== null) gl.uniform1i(uniforms.u_buffer, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
+        if (uniforms.u_obstacles !== null) gl.uniform1i(uniforms.u_obstacles, 1);
+
         if (uniforms.u_resolution !== null) gl.uniform2f(uniforms.u_resolution, w, h);
         if (uniforms.u_time !== null) gl.uniform1f(uniforms.u_time, time);
         if (uniforms.u_mouse !== null) gl.uniform4f(uniforms.u_mouse, mouse.x, mouse.y, mouse.down ? 1.0 : 0.0, 0.0);
         if (uniforms.u_frame !== null) gl.uniform1i(uniforms.u_frame, frameCount);
+        if (uniforms.u_debug_obstacles !== null) gl.uniform1f(uniforms.u_debug_obstacles, debugObstacles ? 1.0 : 0.0);
 
         gl.bindVertexArray(quad);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
