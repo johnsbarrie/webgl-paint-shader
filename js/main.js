@@ -185,7 +185,7 @@ async function main() {
             u_frame: gl.getUniformLocation(prog, "u_frame"),
             u_buffer: gl.getUniformLocation(prog, "u_buffer"),
             u_obstacles: gl.getUniformLocation(prog, "u_obstacles"),
-            //u_debug_obstacles: gl.getUniformLocation(prog, "u_debug_obstacles"),
+            u_debug_obstacles: gl.getUniformLocation(prog, "u_debug_obstacles"),
             u_debug_instability: gl.getUniformLocation(prog, "u_debug_instability"),
         };
     }
@@ -196,7 +196,7 @@ async function main() {
     const uImg = getUniforms(progImg);
 
     const quad = createFullscreenQuad(gl);
-    let debugObstacles = true;
+    let debugObstacles = false;
     let debugInstability = false;
     window.addEventListener("keydown", (e) => {
         if (e.key === "d" || e.key === "D") {
