@@ -4,6 +4,15 @@ async function loadShader(url) {
     return res.text();
 }
 
+function loadImage(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+    });
+}
+
 function compileShader(gl, type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -111,31 +120,80 @@ function createObstacleTexture(gl) {
     return tex;
 }
 
-function buildObstacleMask(w, h) {
+function buildObstacleMask(w, h, obstacleSvgImage) {
     const data = new Uint8Array(w * h * 4);
+
+    if (obstacleSvgImage) {
+        const offscreen = document.createElement("canvas");
+        offscreen.width = w;
+        offscreen.height = h;
+        const ctx = offscreen.getContext("2d", { willReadFrequently: true });
+
+        ctx.clearRect(0, 0, w, h);
+
+        const margin = 0.04;
+        const maxW = w * (1.0 - 2.0 * margin);
+        const maxH = h * (1.0 - 2.0 * margin);
+        const fitScale = Math.min(maxW / obstacleSvgImage.width, maxH / obstacleSvgImage.height);
+        const scale = (1.8 / 3.0) * fitScale;
+        const drawW = obstacleSvgImage.width * scale;
+        const drawH = obstacleSvgImage.height * scale;
+        // Texture upload flips Y in the sim view, so draw near top-left here.
+        // Also pre-flip the SVG vertically so it appears upright in final output.
+        const xOffset = 0.22 * w;
+        const dx = margin * w + xOffset;
+        const dy = margin * h;
+        ctx.save();
+        ctx.translate(dx, dy + drawH);
+        ctx.scale(1, -1);
+        ctx.drawImage(obstacleSvgImage, 0, 0, drawW, drawH);
+        ctx.restore();
+
+        const rgba = ctx.getImageData(0, 0, w, h).data;
+        for (let i = 0; i < w * h; i++) {
+            const alpha = rgba[4 * i + 3];
+            const v = alpha > 16 ? 255 : 0;
+            data[4 * i + 0] = v;
+            data[4 * i + 1] = v;
+            data[4 * i + 2] = v;
+            data[4 * i + 3] = 255;
+        }
+    } else {
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const nx = x / w;
+                const ny = y / h;
+                let solid = false;
+
+                solid = solid || (nx < 0.05 && ny < 0.8 && ny > 0.7);
+                solid = solid || (nx < 0.2 && nx > 0.1 && ny < 0.7 && ny > 0.6);
+                solid = solid || (nx < 0.50 && nx > 0.3 && ny < 0.5 && ny > 0.48);
+                solid = solid || (nx < 0.4 && nx > 0.38 && ny < 0.58 && ny > 0.28);
+
+                const floorY = (0.2 - nx * (0.1 + 0.1 * Math.sin((1.0 - nx) * (1.0 - nx) * 150.0)));
+                solid = solid || (ny < floorY);
+
+                solid = solid || (x < 1 || y < 1 || (h - y) < 1 || (w - x) < 1);
+
+                const i = 4 * (y * w + x);
+                const v = solid ? 255 : 0;
+                data[i + 0] = v;
+                data[i + 1] = v;
+                data[i + 2] = v;
+                data[i + 3] = 255;
+            }
+        }
+    }
 
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-            const nx = x / w;
-            const ny = y / h;
-            let solid = false;
-
-            solid = solid || (nx < 0.05 && ny < 0.8 && ny > 0.7);
-            solid = solid || (nx < 0.2 && nx > 0.1 && ny < 0.7 && ny > 0.6);
-            solid = solid || (nx < 0.50 && nx > 0.3 && ny < 0.5 && ny > 0.48);
-            solid = solid || (nx < 0.4 && nx > 0.38 && ny < 0.58 && ny > 0.28);
-
-            const floorY = (0.2 - nx * (0.1 + 0.1 * Math.sin((1.0 - nx) * (1.0 - nx) * 150.0)));
-            solid = solid || (ny < floorY);
-
-            solid = solid || (x < 1 || y < 1 || (h - y) < 1 || (w - x) < 1);
-
-            const i = 4 * (y * w + x);
-            const v = solid ? 255 : 0;
-            data[i + 0] = v;
-            data[i + 1] = v;
-            data[i + 2] = v;
-            data[i + 3] = 255;
+            if (x < 1 || y < 1 || (w - x) < 1 || (h - y) < 1) {
+                const i = 4 * (y * w + x);
+                data[i + 0] = 255;
+                data[i + 1] = 255;
+                data[i + 2] = 255;
+                data[i + 3] = 255;
+            }
         }
     }
 
@@ -196,6 +254,13 @@ async function main() {
     const uImg = getUniforms(progImg);
 
     const quad = createFullscreenQuad(gl);
+    let obstacleSvgImage = null;
+    try {
+        obstacleSvgImage = await loadImage("assets/adobe.svg");
+    } catch (err) {
+        console.warn("SVG obstacle load failed; using fallback mask.", err);
+    }
+
     let debugObstacles = false;
     let debugInstability = false;
     window.addEventListener("keydown", (e) => {
@@ -267,7 +332,7 @@ async function main() {
             ppC = createPingPong(gl, w, h);
             ppD = createPingPong(gl, w, h);
 
-            const obstacleMask = buildObstacleMask(w, h);
+            const obstacleMask = buildObstacleMask(w, h, obstacleSvgImage);
             gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, obstacleMask);
 

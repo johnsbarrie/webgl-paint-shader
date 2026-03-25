@@ -51,24 +51,24 @@ void main() {
     // Oscillating hose injector: moving nozzle, sweeping direction, and pulsing speed.
     float t = u_time;
     // Tuning parameters.
-    float nozzleVerticalCenter = 0.82;
+    float nozzleVerticalCenter = 0.92;
     float nozzleVerticalAmp = 0.015;
     float nozzleVerticalFreq = 0.05;
     float nozzleRadius = 0.008 * R.y;
-    float sweepPrimaryAmp = 0.005;
+    float sweepPrimaryAmp = 0.25;
     float sweepPrimaryFreq = 0.01;
-    float sweepSecondaryAmp = 0.04;
+    float sweepSecondaryAmp = 0.4;
     float sweepSecondaryFreq = 0.01;
     float speedBase = 0.20;
-    float speedPulseAmp = 0.15;
+    float speedPulseAmp = 0.45;
     float speedPulseFreq = 0.6;
 
     vec2 nozzle = vec2(
         3.0,
         (nozzleVerticalCenter + nozzleVerticalAmp * sin(nozzleVerticalFreq * t)) * R.y
     );
-    float sweep = sweepPrimaryAmp * sin(sweepPrimaryFreq * t);
-               // + sweepSecondaryAmp * sin(sweepSecondaryFreq * t);
+    float sweep = sweepPrimaryAmp * sin(sweepPrimaryFreq * t)
+                + sweepSecondaryAmp * sin(sweepSecondaryFreq * t);
     vec2 dir = normalize(vec2(cos(sweep), sin(sweep)));
     float speed = speedBase + speedPulseAmp * (0.5 + 0.5 * sin(speedPulseFreq * t));
 
