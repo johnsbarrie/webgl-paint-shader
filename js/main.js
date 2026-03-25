@@ -186,6 +186,7 @@ async function main() {
             u_buffer: gl.getUniformLocation(prog, "u_buffer"),
             u_obstacles: gl.getUniformLocation(prog, "u_obstacles"),
             //u_debug_obstacles: gl.getUniformLocation(prog, "u_debug_obstacles"),
+            u_debug_instability: gl.getUniformLocation(prog, "u_debug_instability"),
         };
     }
     const uA = getUniforms(progA);
@@ -196,10 +197,15 @@ async function main() {
 
     const quad = createFullscreenQuad(gl);
     let debugObstacles = true;
+    let debugInstability = false;
     window.addEventListener("keydown", (e) => {
         if (e.key === "d" || e.key === "D") {
             debugObstacles = !debugObstacles;
             console.log("Obstacle debug mode:", debugObstacles ? "ON" : "OFF");
+        }
+        if (e.key === "i" || e.key === "I") {
+            debugInstability = !debugInstability;
+            console.log("Instability debug mode:", debugInstability ? "ON" : "OFF");
         }
     });
 
@@ -288,6 +294,7 @@ async function main() {
         if (uniforms.u_mouse !== null) gl.uniform4f(uniforms.u_mouse, mouse.x, mouse.y, mouse.down ? 1.0 : 0.0, 0.0);
         if (uniforms.u_frame !== null) gl.uniform1i(uniforms.u_frame, frameCount);
         if (uniforms.u_debug_obstacles !== null) gl.uniform1f(uniforms.u_debug_obstacles, debugObstacles ? 1.0 : 0.0);
+        if (uniforms.u_debug_instability !== null) gl.uniform1f(uniforms.u_debug_instability, debugInstability ? 1.0 : 0.0);
 
         gl.bindVertexArray(quad);
         gl.drawArrays(gl.TRIANGLES, 0, 6);

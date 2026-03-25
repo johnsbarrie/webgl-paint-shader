@@ -53,5 +53,9 @@ void main() {
         Q.xy = vec2(0.0);
     }
 
+    Q.z = clamp(Q.z, -20.0, 20.0);
+    Q.w = clamp(Q.w, 0.0, 1.0);
+    if (any(isnan(Q)) || any(isinf(Q))) Q = vec4(0.0);
+
     fragColor = Q;
 }

@@ -35,5 +35,10 @@ void main() {
     if (dQ.w > 0.0) dQ.xyz /= dQ.w;
     Q = dQ;
 
+    if (length(Q.xy) > 0.7) Q.xy = 0.7 * normalize(Q.xy);
+    Q.z = clamp(Q.z, -20.0, 20.0);
+    Q.w = clamp(Q.w, 0.0, 1.0);
+    if (any(isnan(Q)) || any(isinf(Q))) Q = vec4(0.0);
+
     fragColor = Q;
 }
