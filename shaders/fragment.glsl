@@ -54,5 +54,8 @@ void main() {
     float t = 0.5 + 0.5 * sin(3.5 - 0.3 * f.z);
     vec4 blue =     vec4(0.0, 0.40, 0.70, 1.0);
     vec4 turquoise = vec4(0.20, 0.60, 0.55, 1.0);
-    fragColor = mix(blue, turquoise, t) * f.w;
+    vec4 yellow = vec4(0.95, 0.85, 0.20, 1.0);
+    vec4 baseColor = mix(blue, turquoise, t);
+    vec4 color = mix(baseColor, yellow, 0.10 * t);
+    fragColor = color * f.w;
 }

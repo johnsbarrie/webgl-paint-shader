@@ -48,10 +48,34 @@ void main() {
     // Reset on first frame
     if (u_frame < 1) Q = vec4(0);
 
-    // Fluid source (top-left strip)
-    if (U.x < 4.0 && U.y > 0.875 * R.y && U.y < 0.89 * R.y) {
+    // Oscillating hose injector: moving nozzle, sweeping direction, and pulsing speed.
+    float t = u_time;
+    // Tuning parameters.
+    float nozzleVerticalCenter = 0.82;
+    float nozzleVerticalAmp = 0.015;
+    float nozzleVerticalFreq = 0.05;
+    float nozzleRadius = 0.008 * R.y;
+    float sweepPrimaryAmp = 0.005;
+    float sweepPrimaryFreq = 0.01;
+    float sweepSecondaryAmp = 0.04;
+    float sweepSecondaryFreq = 0.01;
+    float speedBase = 0.20;
+    float speedPulseAmp = 0.15;
+    float speedPulseFreq = 0.6;
+
+    vec2 nozzle = vec2(
+        3.0,
+        (nozzleVerticalCenter + nozzleVerticalAmp * sin(nozzleVerticalFreq * t)) * R.y
+    );
+    float sweep = sweepPrimaryAmp * sin(sweepPrimaryFreq * t);
+               // + sweepSecondaryAmp * sin(sweepSecondaryFreq * t);
+    vec2 dir = normalize(vec2(cos(sweep), sin(sweep)));
+    float speed = speedBase + speedPulseAmp * (0.5 + 0.5 * sin(speedPulseFreq * t));
+
+    if (length(U - nozzle) < nozzleRadius) {
         Q.w = 1.0;
-        Q.z = 10.0 * sin(0.3 * u_time);
+        Q.z = 8.0 * sin(0.3 * t + 0.7 * sin(0.5 * t));
+        Q.xy = speed * dir;
     }
 
     // Obstacles: stop velocity but keep density/color state.
