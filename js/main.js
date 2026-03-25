@@ -155,35 +155,35 @@ async function main() {
 
     // Mouse state (ShaderToy convention: z > 0 when pressed)
     const mouse = { x: 0, y: 0, down: false };
-    canvas.addEventListener("mousemove", (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        mouse.x = (e.clientX - rect.left) * dpr;
-        mouse.y = (canvas.height - (e.clientY - rect.top) * dpr); // flip Y
-    });
-    canvas.addEventListener("mousedown", () => { mouse.down = true; });
-    canvas.addEventListener("mouseup", () => { mouse.down = false; });
-    canvas.addEventListener("mouseleave", () => { mouse.down = false; });
+    // canvas.addEventListener("mousemove", (e) => {
+    //     const rect = canvas.getBoundingClientRect();
+    //     const dpr = window.devicePixelRatio || 1;
+    //     mouse.x = (e.clientX - rect.left) * dpr;
+    //     mouse.y = (canvas.height - (e.clientY - rect.top) * dpr); // flip Y
+    // });
+    // canvas.addEventListener("mousedown", () => { mouse.down = true; });
+    // canvas.addEventListener("mouseup", () => { mouse.down = false; });
+    // canvas.addEventListener("mouseleave", () => { mouse.down = false; });
 
     // Touch support
-    canvas.addEventListener("touchstart", (e) => {
-        e.preventDefault();
-        mouse.down = true;
-        const t = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        mouse.x = (t.clientX - rect.left) * dpr;
-        mouse.y = (canvas.height - (t.clientY - rect.top) * dpr);
-    }, { passive: false });
-    canvas.addEventListener("touchmove", (e) => {
-        e.preventDefault();
-        const t = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        mouse.x = (t.clientX - rect.left) * dpr;
-        mouse.y = (canvas.height - (t.clientY - rect.top) * dpr);
-    }, { passive: false });
-    canvas.addEventListener("touchend", () => { mouse.down = false; });
+    // canvas.addEventListener("touchstart", (e) => {
+    //     e.preventDefault();
+    //     mouse.down = true;
+    //     const t = e.touches[0];
+    //     const rect = canvas.getBoundingClientRect();
+    //     const dpr = window.devicePixelRatio || 1;
+    //     mouse.x = (t.clientX - rect.left) * dpr;
+    //     mouse.y = (canvas.height - (t.clientY - rect.top) * dpr);
+    // }, { passive: false });
+    // canvas.addEventListener("touchmove", (e) => {
+    //     e.preventDefault();
+    //     const t = e.touches[0];
+    //     const rect = canvas.getBoundingClientRect();
+    //     const dpr = window.devicePixelRatio || 1;
+    //     mouse.x = (t.clientX - rect.left) * dpr;
+    //     mouse.y = (canvas.height - (t.clientY - rect.top) * dpr);
+    // }, { passive: false });
+    // canvas.addEventListener("touchend", () => { mouse.down = false; });
 
     // FBO management
     let w = 0, h = 0;

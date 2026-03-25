@@ -38,13 +38,13 @@ void main() {
         Q = vec4(0.1 * normalize(M - 0.5 * R), -1.0, 1.0);
 
     // Velocity clamp
-    if (length(Q.xy) > 0.5) Q.xy = 0.5 * normalize(Q.xy);
+    if (length(Q.xy) > 0.7) Q.xy = 0.7 * normalize(Q.xy);
 
     // Reset on first frame
     if (u_frame < 1) Q = vec4(0);
 
     // Fluid source (top-left strip)
-    if (U.x < 4.0 && U.y > 0.8 * R.y && U.y < 0.9 * R.y) {
+    if (U.x < 4.0 && U.y > 0.98 * R.y && U.y < 0.975 * R.y) {
         Q.w = 1.0;
         Q.z = 10.0 * sin(0.1 * u_time);
     }
@@ -53,11 +53,11 @@ void main() {
     if (U.x < 0.05 * R.x && U.y < 0.8 * R.y && U.y > 0.7 * R.y) Q.xy *= 0.0;
     if (U.x < 0.2 * R.x && U.x > 0.1 * R.x && U.y < 0.7 * R.y && U.y > 0.6 * R.y) Q.xy *= 0.0;
     if (U.x < 0.7 * R.x && U.x > 0.3 * R.x && U.y < 0.6 * R.y && U.y > 0.55 * R.y) Q.xy *= 0.0;
-    if (U.x < 0.65 * R.x && U.x > 0.6 * R.x && U.y < 0.7 * R.y && U.y > 0.48 * R.y) Q.xy *= 0.0;
+    if (U.x < 0.45 * R.x && U.x > 0.4 * R.x && U.y < 0.64 * R.y && U.y > 0.48 * R.y) Q.xy *= 0.0;
 
     // Wavy floor
-    if (U.y < (0.2 - U.x / R.x * (0.1 + 0.1 * sin((1.0 - U.x / R.x) * (1.0 - U.x / R.x) * 50.0))) * R.y)
-        Q.xy *= 0.0;
+    //if (U.y < (0.2 - U.x / R.x * (0.1 + 0.1 * sin((1.0 - U.x / R.x) * (1.0 - U.x / R.x) * 150.0))) * R.y)
+      //  Q.xy *= 0.0;
 
     // Boundary walls
     if (U.x < 1.0 || U.y < 1.0 || R.y - U.y < 1.0) Q.xy *= 0.0;
