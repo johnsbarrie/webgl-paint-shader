@@ -140,7 +140,7 @@ function buildObstacleMask(w, h, obstacleSvgImage) {
         const drawH = obstacleSvgImage.height * scale;
         // Texture upload flips Y in the sim view, so draw near top-left here.
         // Also pre-flip the SVG vertically so it appears upright in final output.
-        const xOffset = 0.22 * w;
+        const xOffset = 0.02 * w;
         const dx = margin * w + xOffset;
         const dy = margin * h;
         ctx.save();
@@ -256,7 +256,7 @@ async function main() {
     const quad = createFullscreenQuad(gl);
     let obstacleSvgImage = null;
     try {
-        obstacleSvgImage = await loadImage("assets/adobe.svg");
+        obstacleSvgImage = await loadImage("assets/bentley.svg");
     } catch (err) {
         console.warn("SVG obstacle load failed; using fallback mask.", err);
     }
