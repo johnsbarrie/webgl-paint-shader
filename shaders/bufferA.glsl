@@ -78,6 +78,32 @@ void main() {
         Q.xy = speed * dir;
     }
 
+    // Obstacle edge collision response: reflect inward velocity and add tangential splash.
+    float edgeReflect = 1.6;
+    float edgeSplash = 0.45;
+    float edgeDensityBase = 0.55;
+    float edgeDensityGain = 0.45;
+    float oC = texture(u_obstacles, U / R).r;
+    if (oC < 0.5) {
+        float oL = texture(u_obstacles, (U + vec2(-1.0, 0.0)) / R).r;
+        float oR = texture(u_obstacles, (U + vec2( 1.0, 0.0)) / R).r;
+        float oD = texture(u_obstacles, (U + vec2(0.0, -1.0)) / R).r;
+        float oU = texture(u_obstacles, (U + vec2(0.0,  1.0)) / R).r;
+        vec2 grad = vec2(oR - oL, oU - oD);
+        float gl = length(grad);
+        if (gl > 1e-4) {
+            vec2 n = grad / gl;
+            float vn = dot(Q.xy, n);
+            if (vn > 0.0) {
+                vec2 tdir = vec2(-n.y, n.x);
+                float jitter = sign(sin(dot(U, vec2(0.13, 0.37)) + 9.0 * u_time));
+                Q.xy -= edgeReflect * vn * n;
+                Q.xy += edgeSplash * abs(vn) * tdir * jitter;
+                Q.w = min(1.0, max(Q.w, edgeDensityBase + edgeDensityGain * abs(vn)));
+            }
+        }
+    }
+
     // Obstacles: stop velocity but keep density/color state.
     if (isObstacle(U, R)) {
         Q.xy = vec2(0.0);
